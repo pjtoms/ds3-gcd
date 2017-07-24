@@ -1,0 +1,138 @@
+---
+title: "Codebook.Rmd"
+author: "[Patrick (Pat) T...](https://github.com/pjtoms)"
+output:
+  md_document:
+    variant: markdown_github
+    toc: TRUE
+---
+#Codebook.md
+## General Information
+* __Author:__ *pjtx4657, Patrick (Pat) T.*
+* __GitHub Project Link:__ [project](https://github.com/pjtoms "GitHub project link")
+* __Last update:__ `r Sys.time()`<br>
+
+## Study Design
+Getting And Cleaning Data - Coursera Data Science Course 3, demonstrates ability to collect, work with, and clean a data set. The original data is manipulated into summarized by activity and subject [tidy](http://vita.had.co.nz/papers/tidy-data.pdf "tidy data paper") form.
+
+The data linked to from the course website represents data collected from the accelerometers of the Samsung Galaxy S smartphone. A full description is available at the [site](http://archive.ics.uci.edu/ml/datasets/Human+Activity+Recognition+Using+Smartphones "from UCI Machine Learning Repository - citation request at bottom of page") where the data was obtained. And the raw data for the project is located [here](https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip "from UCI Machine Learning Repository").
+
+### Data Transformations
+See [run_analysis.html](https://github.com/pjtoms/ "run_analysis.Rmd output") for a detailed description of data transformations, clean up, and the code used in production of the tidy data file.
+
+### Definitions
+More detail is available from the UCI raw data referenced above.
+
+```{r terms, echo=FALSE, results='asis'}
+cat("Term | Definition\n")
+cat("------------------ |:----------------------------------\n")
+cat("Domain | Category for signal derivation. Signals periodically obtained are part of the 'Time' domain. Signals processed using Fast Fourier Transform (FFT) are part of the 'Frequency' domain.\n")
+cat("Accelerometer | Signal generator in 3-axial (X, Y, Z) directions.\n")
+cat("Gyroscope | Signal generator in 3-axial (X, Y, Z) directions.\n")
+cat("Body | Part of acceleration signal.\n")
+cat("Gravity | Part of acceleration signal.\n")
+cat("Jerk | Body linear acceleration and angular velocity derived in time domain.\n")
+cat("Magnitude | Magnitude of the three-dimensional signals calculated using the Euclidean norm.\n")
+cat("Signal | The actual telemetry received from the device.\n")
+cat("Mean of Means | The data has been averaged for some values and extracted for this project. These values are then averaged by activity and subject.\n")
+cat("Mean of Standard Deviations | The data has calculated standard deviations for the values which are extracted for this project. These values are then averaged by activity and subject.\n")
+```
+
+**Note:** There may be NA values in the tidy data due to factor usage or other missing values.
+
+### Some R setup for producing the Code Book.
+Code is hidden. See Codebook.Rmd for details.
+```{r setup, echo=FALSE}
+
+# Get full name descriptions for data.
+namesDict <- "./namesDictionary.txt"
+dtNamesDict <- data.table(read.table(namesDict, header=TRUE))
+setkey(dtNamesDict, "Variable")
+
+# Get regular expression based descriptions for data.
+# Don't set a key, the table order should be used ASIS.
+grepDict <- "./grepDictionary.txt"
+dtGrepDict <- data.table(read.table(grepDict, header=TRUE))
+
+getDescAndType <- function(name) {
+  columnDescription <- ""
+  descAndType <- ""
+  # Flag to denote we formed a codeboook entry.
+  matchFound <- FALSE
+  
+  if (as.logical(nrow(dtNamesDict[name, nomatch=0L]))) {
+    descAndType <- cat(name, " | ", format(dtNamesDict[name]$Description), " | ", format(dtNamesDict[name]$Value), "\n")
+    matchFound <- TRUE
+  } else {
+    for (j in 1:nrow(dtGrepDict)) {
+      if (grepl(format(dtGrepDict[j]$Expression), name)) {
+        matchFound <- TRUE
+        columnDescription <- paste(columnDescription, format(dtGrepDict[j]$Text))
+        if (!as.logical(dtGrepDict[j]$Continue)) {
+          break
+        }
+      }
+    }
+    
+    if (matchFound) {
+      descAndType <- cat(name, " | ", columnDescription, " | Number between -1 and 1.\n")
+    }
+  }
+  
+  if (!matchFound) {
+    descAndType <- cat(name, " | unknown desc | unknown type \n")
+  }
+}
+
+```
+
+## Code Book
+
+Generated based on column names and contents of "namesDictionary.txt" and "grepDictionary.txt".
+
+Code is hidden. See Codebook.Rmd for details.
+
+```{r echo=FALSE, results='asis'}
+cat("Variables | Descriptions | Value Type\n")
+cat("---------------------- |:----------------------|----------------------\n")
+for (i in namesVector) {
+  cat(getDescAndType(i))
+}
+```
+
+## Additional Information
+
+### Tidy Data Structure
+```{r echo=FALSE}
+str(dtTidy)
+```
+
+### To Use the Tidy Data in R
+The tidy data is saved as an R data.table in text and CSV formats. The following sample code may be used to read the data.table and restore its types as needed.
+
+I don't run this code, just provide it as an example.
+
+```{r eval=FALSE, echo=TRUE}
+
+#
+# To input the tidy 'wide' format data (my default preference) as an R data.table.
+#
+dtTidy <- read.table(tidy_txt_fname, stringsAsFactors = FALSE, header=TRUE)
+dtTidy[, c(1)] <- sapply(dtTidy[, c(1)], as.factor)
+# dtTidy is now in the same format as what was saved.
+
+#
+# To input the tidy 'tall' format data as an R data.table.
+#
+dtTidy <- read.table(tidy_txt_fname, stringsAsFactors = FALSE, header=TRUE)
+
+# I think the following should work but doesn't on my system.
+dtTidy[, c(1, 3:8)] <- sapply(dtTidy[, c(1, 3:8)], as.factor)
+
+# This gets me back to the original form.
+dtTidy[, c(1)] <- sapply(dtTidy[, c(1)], as.factor)
+# And the following repeated, replacing 'x' with the number 3 through 8.
+dtTidy[, c(x)] <- sapply(dtTidy[, c(x)], as.factor)
+# dtTidy is now in the same format as what was saved.
+
+```

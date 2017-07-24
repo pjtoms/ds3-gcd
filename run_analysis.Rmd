@@ -1,0 +1,382 @@
+---
+title:  "run_analysis.Rmd"
+author: "[Patrick (Pat) T...](https://github.com/pjtoms)"
+output:
+  html_document:
+    toc: TRUE
+---
+<p>
+**title:** "run_analysis.Rmd"<br>
+**author:** "[Patrick (Pat) T...](https://github.com/pjtoms)"<br>
+**Last update:** `r Sys.time()`<br>
+**Environment:** RStudio on macOS Sierra, version - "`r Sys.info()["version"]`"<br>
+
+<p>
+**Note:** For development purposes I make many table copies and leave the old tables hanging around. For production use, this should be changed to use a single data table until the final 'tidy' format conversion.
+
+## Purpose
+_**NOTE:** This section is paraphrased from the Coursera project notes._
+
+Demonstrate ability to collect, work with, and clean a data set.  
+
+The data linked to from the course website represents data collected from the accelerometers from the Samsung Galaxy S smartphone. A full description is available at the [site](http://archive.ics.uci.edu/ml/datasets/Human+Activity+Recognition+Using+Smartphones "from UCI Machine Learning Repository - citation request at bottom of page") where the data was obtained.  
+  
+And the raw data for the project is located [here](https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip "from UCI Machine Learning Repository").
+  
+  
+### Instructions
+Create one R script called run_analysis.R that does the following.
+
+1. Merges the training and the test sets to create one data set.  
+1. Extracts only the measurements on the mean and standard deviation for each measurement.  
+1. Uses descriptive activity names to name the activities in the data set.  
+1. Appropriately label the data set with descriptive variable names.  
+1. From the data set in step 4, creates a second, independent tidy data set with the average of each variable for each activity and each subject.
+
+#### Notes
+* My run_analysis.R script invokes this R markdown script to do the work. 
+* Since we want one output tidy data set I take the "average of each variable for each activity and each subject" to mean we summarize by activity and subject.
+
+# Main Processing
+
+## Some Local Definitions (not shown)
+Set some processing variables. Some of these were determined by looking at the downloaded file contents before-hand and the associated README.txt file.  
+```{r echo=FALSE}
+
+verboseOn <-FALSE     # To get verbose output set 'verboseOn' to TRUE.
+debugOn <- FALSE      # To get some diagnostics set 'debugOn' to TRUE.
+wideFormat <- TRUE    # I'm creating a wide format tidy data set as output. Seems to be more
+                      # consistent with the original un-summarized data.
+                      #
+                      # Set variable 'wideFormat' to FALSE if you prefer tall formatting.
+                      # Tall formatting might have benefits for DB (keyed) type access, but
+                      # it loses some naming consistency with the original data.
+                      #
+                      # The processing is similar for each type and only differs at the
+                      # final step.
+
+# Save the current processing time. With verbose output you get processing times.
+myptm <- proc.time()
+
+# Set some local variables for the various UCI files.
+uciBase <- "./UCI HAR Dataset"
+uciFile <- paste(uciBase, "zip", sep=".")
+
+# Various train data files
+trainActivityFile <- paste(uciBase, "train/y_train.txt", sep="/")
+trainSubjectFile <- paste(uciBase, "train/subject_train.txt", sep="/")
+trainDataFile <- paste(uciBase, "train/X_train.txt", sep="/")
+
+# Various test data files
+testActivityFile <- paste(uciBase, "test/y_test.txt", sep="/")
+testSubjectFile <- paste(uciBase, "test/subject_test.txt", sep="/")
+testDataFile <- paste(uciBase, "test/X_test.txt", sep="/")
+
+dataLabels <- paste(uciBase, "features.txt", sep="/")
+activityLabelsData <- paste(uciBase, "activity_labels.txt", sep="/")
+
+# Eventual 'tidy' output files.
+tidy_txt_fname <- "./uciMeanStdDevTidy.txt"
+tidy_csv_fname <- "./uciMeanStdDevTidy.csv"
+
+```
+
+## Get The Data
+Download the [data](https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip "Project data") file and unzip it to sub-directory "UCI HAR Dataset" in the current directory. Only done if needed. On my system this saves about 11 seconds.
+
+```{r}
+
+# If needed, download and unzip the data file in the current directory.
+if (dir.exists(uciBase)) {
+  cat("File: ", uciFile, " is already downloaded and unzipped to local directory: ", uciBase, "\n\n")
+} else {
+  if (!file.exists(uciFile)) {
+    uciDataURL <- "https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip"
+    download.file(uciDataURL, uciFile)
+  } 
+  unzip(zipfile=uciFile, exdir=".")
+}
+
+```
+
+## Step 1 - Merge Training and Test Sets
+
+Read the various files. All similar train and test data set types are merged - X_[train|test].txt, y_[train|test].txt, subject_[train|test].txt.  
+
+To avoid collisions I rename the "V1" column in the Subject and Activity tables. Subject\$V1 goes to "subject" and Activity\$V1 goes to "activityNum".  
+```{r}
+
+# Local function to return a Data Frame for the supplied file name.
+getDF <- function(filename, asFactors = TRUE) {
+    read.table(filename, stringsAsFactors = asFactors)
+}
+
+# Local function to return a Data Table for the supplied file name.
+# Saves some space and complexity in subsequent commands.
+getDT <- function(filename, asFactors = TRUE) {
+    data.table(getDF(filename, asFactors))
+}
+
+# Read in and merge the training and test data by columns.
+# Reset the "V1" column name in the activity and subject tables before merging. Avoids conflicts with data column "V1".
+dtTrainMerge <- cbind(setnames(getDT(trainActivityFile), "V1", "activityNum"),
+                      setnames(getDT(trainSubjectFile),  "V1", "subject"),
+                      getDT(trainDataFile))
+dtTestMerge <- cbind(setnames(getDT(testActivityFile), "V1", "activityNum"),
+                     setnames(getDT(testSubjectFile),  "V1", "subject"),
+                     getDT(testDataFile))
+
+# Now merge all the data.
+dtMerged <- rbind(dtTrainMerge, dtTestMerge)
+
+# Debug - Do some data size sanity checks. 
+if (debugOn) {
+  str(dtMerged)
+  
+  inputRows <- dim(dtTrainMerge)[1] + dim(dtTestMerge)[1]
+  inputCols <- dim(dtTrainMerge)[2]
+  outputRows <- dim(dtMerged)[1]
+  outputCols <- dim(dtMerged)[2]
+  
+  if (inputRows != outputRows) {
+    cat("inputRows: ", inputRows, " != outputRows: ", outputRows, "\n\n")
+    stop("Merged row count test failed")
+  } else {
+    if (inputCols != outputCols) {
+      cat("inputCols: ", inputCols, " != outputCols: ", outputCols, "\n\n")
+      stop("Merged column count test failed")
+    }
+  }
+}
+
+# We don't need the initial files any longer, so allow gc to free them.
+rm(dtTrainMerge, dtTestMerge)
+
+```
+
+## Step 2 - Extract mean and standard deviation (std) data
+
+From the associated data labels determine which columns contain mean and std values and extract only those columns. From data.table dtMerged I now have dtMeanStd which includes columns activityNum and subject with the mean and std columns.
+```{r}
+
+# Read in the column labels for the data.
+dtLabels <- getDT(dataLabels, asFactors = FALSE)
+
+# Extract the labels with "mean()" and "std()" using grep.
+# Since a paren is part of regular expression syntax it has to be escaped and the 
+# escape character also has to be escaped.
+dtMeanStdDevIndexes <- grep(".*mean\\(\\)*|.*std\\(\\)*", dtLabels$V2)
+dtMeanStdDevLabels <- dtLabels[dtMeanStdDevIndexes,]
+
+# I added activity and subject in columns 1 and 2 so add the number of added columns
+# to each label index.
+#
+# Now combine the index sets to be extracted.
+actSubjIndexes = c(1, 2)
+dtExtractIndexes = c(actSubjIndexes, (dtMeanStdDevIndexes + length(actSubjIndexes)))
+
+# Now we have extracted mean/std and added activity and subject to the extracted data.
+dtMeanStd <- dtMerged[, dtExtractIndexes, with=FALSE]
+
+rm(dtMerged)
+
+```
+
+## Step 3 - Use descriptive activity names to name the activities in the data set
+
+I add a new column, activity name, based on the label data provided in UCI supplied file 'activity_labels.txt'. The activity name column contents are based on the activityNum column value.
+```{r}
+
+dtActivityLabels <- data.table(read.table(activityLabelsData))
+setnames(dtActivityLabels, names(dtActivityLabels), c("activityNum", "activity name"))
+
+# Merge in the labels and reset column order. Put the key columns first.
+dtMeanStdAct <- merge(dtMeanStd, dtActivityLabels, by="activityNum", all.x = TRUE)
+setcolorder(dtMeanStdAct, c(1, ncol(dtMeanStdAct), 2, seq(from = 3, to = (ncol(dtMeanStdAct) - 1))))
+
+# Add 'activityName' to the sort.
+setkey(dtMeanStdAct, "activityNum", "activity name", "subject")
+
+# Debug - Output some checks.
+if (debugOn) {
+  cat("Debug -\n\n", "Activity Labels: \n")
+  print(head(dtActivityLabels, 6))
+  cat("\nSummary of Labels Used: \n")
+  print(summary(dtMeanStdAct$activityName))
+}
+
+```
+
+## Step 4 - Label the data set with descriptive variable names.
+
+I use a subset of the UCI features.txt file with only the rows including mean and std in the labels. This subset is used to set the names for the default labeled columns, 4 - end, in data.table dtMeanStdAct. I no longer need the activityNum column (it's been incorporated into activity name) so I delete it from the data.table.
+
+```{r}
+
+setnames(dtMeanStdAct, 4:ncol(dtMeanStdAct), dtMeanStdDevLabels$V2)
+
+# Reset the keys to remove "activityNum" since we'll use "activityName" from now on.
+# Remove the "activityNum" column.
+setkey(dtMeanStdAct, "activity name", "subject")
+dtMeanStdAct[, activityNum:=NULL]
+
+```
+
+## Step 5 - Create a second, independent tidy data set with the average of each variable for each activity and each subject
+
+### Wide Format
+
+For wide format I just get the means for the data.table columns by activity Name and subject and include the observation count per mean value. The 'N' count column is relabeled 'Observation Count'. I then get the column names for Code Book generation. I save the dtTidy data.table in file uciMeanStdDevTidy.txt and uciMeanStdDevTidy.csv.
+
+### Tall Format
+
+See code. It's not my primary deliverable so I'm skipping extra documentation to avoid confusion.
+```{r}
+
+if (wideFormat) {
+  # For 'wide' format do the following.
+  # Subset the data table by its key, calculating the average per subset and include the row counts.
+  dtTidy <- dtMeanStdAct[, c(.N, lapply(.SD, mean)), by=key(dtMeanStdAct) ]
+  setnames(dtTidy, "N", "Observation Count")
+} else {
+  # For "tall" formatted data with fewer columns, more factors, do the following.
+  # Restructure the data into data.table dtMelt.
+  dtMelt <- data.table(melt(dtMeanStdAct, key(dtMeanStdAct), variable.name = "featureCode"))
+  if (debugOn) {
+    str(dtMelt)
+  }
+  
+  # Clean-up the data:
+  #  Set the keys for this format 
+  #  Compute means of the data by featureCode
+  #  Isolate the mean and standard deviation values into their own columns. They're related to the same observations.
+  #    There has to be a better way to do this, but I found a way that worked.
+  #  Convert - From activityName, subject, featureCode, value
+  #  To activityName, subject, featureCode (less mean or std), mean count, mean of means, stddev count., and mean of stddevs.
+  
+  setkey(dtMelt, "activity name", "subject", "featureCode")
+  dtMeltMean <- dtMelt[, list(count = .N, average = mean(value)), by = key(dtMelt)]
+  
+  # Isolate "mean" values
+  dtM1 <- subset(dtMeltMean, featureCode %in% grep("*mean*", featureCode, value=TRUE))
+  dtM1$featureCode <- gsub("*-mean\\(\\)*", "", dtM1$featureCode)
+  setnames(dtM1, "count", "Mean Count")
+  setnames(dtM1, "average", "Mean of Means")
+    
+  # There must be a better way to do the following subsets with a data.table, but I
+  # haven't found it.
+  
+  # Isolate "stddev" values
+  dtM2 <- subset(dtMeltMean, featureCode %in% grep("*std*", featureCode, value=TRUE))
+  dtM2$featureCode <- gsub("*-std\\(\\)*", "", dtM2$featureCode)
+  setnames(dtM2, "count", "StdDev Count")
+  setnames(dtM2, "average", "Mean of StdDevs")
+  
+  # Merge the mean and stddev values
+  dtMerge <- merge(dtM1, dtM2, by = c("activity name", "subject", "featureCode"), all.x = TRUE, all.y=TRUE)
+  if (debugOn) {
+    print("Merge structure")
+    str(dtMerge)
+  }
+  
+  # If the counts for mean and stddev are all the same then we can delete a column
+  if ( nrow(dtMerge[dtMerge$`Mean Count` != dtMerge$`StdDev Count`]) == 0 ) {
+    dtMerge[, `StdDev Count`:=NULL]
+    setnames(dtMerge, "Mean Count", "Observation Count")
+    if (debugOn) {
+      print(nrow(dtMerge[dtMerge$`Mean Count` == dtMerge$`StdDev Count`]))
+      str(dtMerge)
+    }
+  } else {
+    if (debugOn) {
+      print(nrow(dtMerge[dtMerge$`Mean Count` == dtMerge$`StdDev Count`]))
+      str(dtMerge)
+    }
+  }
+  
+  if (debugOn) {
+    str(dtMerge)
+  }
+
+  # Function to grep the dtMelt data table "featureCode" column for a Regular Expression match.
+  # Saves some space and complexity in subsequent commands.
+  grepMergeFC <- function(regex) {
+      grepl(regex, dtMerge$featureCode)
+  }
+  
+  # Create various factors based on the featureCode value.
+  dtMerge$featureDomain <- ifelse(grepMergeFC("^t"), 1, 2)
+  dtMerge$featureDomain <- factor(dtMerge$featureDomain, labels = c("Time", "Frequency"))
+  
+  dtMerge$featureSignalType <- ifelse(grepMergeFC("Body"), 1, 2)
+  dtMerge$featureSignalType <- factor(dtMerge$featureSignalType, labels = c("Body", "Gravity"))
+  
+  dtMerge$featureTelemetryBy <- ifelse(grepMergeFC("Acc"), 1, 2)
+  dtMerge$featureTelemetryBy <- factor(dtMerge$featureTelemetryBy, labels = c("Accelerometer", "Gyroscope"))
+  
+  dtMerge$featureDerivedJerk <- ifelse(grepMergeFC("Jerk"), 1, NA)
+  dtMerge$featureDerivedJerk <- factor(dtMerge$featureDerivedJerk, labels = c("Jerk"))
+  
+  dtMerge$featureDerivedMagnitude <- ifelse(grepMergeFC("Mag"), 1, NA)
+  dtMerge$featureDerivedMagnitude <- factor(dtMerge$featureDerivedMagnitude, labels = c("Magnitude"))
+
+  dtMerge$featureAxis <- ifelse(grepMergeFC("-X"), 1,
+                           ifelse(grepMergeFC("-Y"), 2,
+                             ifelse(grepMergeFC("-Z"), 3, NA)))
+  dtMerge$featureAxis <- factor(dtMerge$featureAxis, labels =  c("X", "Y", "Z"))
+  
+  # Remove the no longer needed featureCode column.
+  #   Column featureCode has been broken into separate feature* columns with appropriate factor values.
+  dtMerge[, featureCode:=NULL]
+  
+  if (debugOn) {
+    str(dtMerge)
+  }
+
+  # Reset the column order.
+  setcolorder(dtMerge, c(match("activity name",names(dtMerge)),
+                         match("subject",names(dtMerge)),
+                         seq(from = match("featureDomain",names(dtMerge)), to = ncol(dtMerge)),
+                         match("Observation Count",names(dtMerge)),
+                         match("Mean of Means",names(dtMerge)),
+                         match("Mean of StdDevs",names(dtMerge))))
+  
+  # Set the keys.
+  setkey(dtMerge, "activity name", "subject",
+         "featureDomain", "featureSignalType", "featureTelemetryBy", "featureDerivedJerk", "featureDerivedMagnitude", "featureAxis" )
+  
+  # Now for the final Tidy data.table. Key information is propagated to the new table.
+  dtTidy <- dtMerge
+}
+
+if (debugOn) {
+  str(dtTidy)
+}
+
+# Save the final column names. We can use this for the codebook.
+namesVector <- names(dtTidy)
+
+# Tidy data as text file.
+write.table(dtTidy, tidy_txt_fname, row.names = FALSE)
+cat(sprintf("Tidy text file: %s\n", tidy_txt_fname))
+
+# Tidy data as csv file.
+write.table(dtTidy, tidy_csv_fname, sep = ",", row.names = FALSE)
+cat(sprintf("Tidy csv file: %s\n", tidy_csv_fname))
+
+```
+
+# Generate Code Book
+
+The Codebook.Rmd script will use the namesVector to generate a Code Book for this project. Both pwide and tall formats are supported.
+
+```{r}
+
+render("./Codebook.Rmd", quiet = TRUE)
+
+```
+
+# References
+* [R Markdown Cheat Sheet](https://www.rstudio.com/wp-content/uploads/2016/03/rmarkdown-cheatsheet-2.0.pdf "instructional")
+* [UCI Data Citation](http://archive.ics.uci.edu/ml/citation_policy.html "from UCI Citation Policy")
+
