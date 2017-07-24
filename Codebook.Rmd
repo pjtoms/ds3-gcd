@@ -1,6 +1,6 @@
 ---
 title: "Codebook.Rmd"
-author: "[Patrick (Pat) T...](https://github.com/pjtoms)"
+author: "[Patrick (Pat) T...](https://github.com/pjtoms/ds3-gcd)"
 output:
   md_document:
     variant: markdown_github
@@ -9,7 +9,7 @@ output:
 #Codebook.md
 ## General Information
 * __Author:__ *pjtx4657, Patrick (Pat) T.*
-* __GitHub Project Link:__ [project](https://github.com/pjtoms "GitHub project link")
+* __GitHub Project Link:__ [project](https://github.com/pjtoms/ds3-gcd "GitHub project link")
 * __Last update:__ `r Sys.time()`<br>
 
 ## Study Design
@@ -18,7 +18,7 @@ Getting And Cleaning Data - Coursera Data Science Course 3, demonstrates ability
 The data linked to from the course website represents data collected from the accelerometers of the Samsung Galaxy S smartphone. A full description is available at the [site](http://archive.ics.uci.edu/ml/datasets/Human+Activity+Recognition+Using+Smartphones "from UCI Machine Learning Repository - citation request at bottom of page") where the data was obtained. And the raw data for the project is located [here](https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip "from UCI Machine Learning Repository").
 
 ### Data Transformations
-See [run_analysis.html](https://github.com/pjtoms/ "run_analysis.Rmd output") for a detailed description of data transformations, clean up, and the code used in production of the tidy data file.
+See [run_analysis.html](https://github.com/pjtoms/ds3-gcd/run_analysis.html "run_analysis.Rmd output") for a detailed description of data transformations, clean up, and the code used in production of the tidy data file.
 
 ### Definitions
 More detail is available from the UCI raw data referenced above.
