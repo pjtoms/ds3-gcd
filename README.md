@@ -1,6 +1,6 @@
 # Data Science 3 Project - Getting and Cleaning Data
 * __Author:__ *pjtx4657, Patrick (Pat) T.*
-* __GitHub Project Link:__ [project](https://github.com/pjtoms "GitHub project link")
+* __GitHub Project Link:__ [project](https://github.com/pjtoms/ds3-gcd "GitHub project link")
 
 ## Contents
 
@@ -28,11 +28,12 @@ The project requires the following to be submitted.
 3. Code book that describes the variables, the data, and any transformations or work that you performed to clean up the data called __CodeBook.md__.
 4. Include a __README.md__ in the repository with the scripts explaining how all of the scripts work and how they are connected.
 
-My [repository](https://github.com/pjtoms "GitHub project link") contains the following.
-* README.md - This file
-* Code - File run_analysis.R (R) and run_analysis.Rmd (Rmarkdown). I chose to use RMarkdown as it allows for co-located documentation and code and a formatted presentation of the script and its output.
-* Codebook.md - Full description of derived tidy data set in markdown format
-* Output - Tidy data set in file uciMeanStdDevTidy.txt, uciMeanStdDevTidy.csv
+My [repository](https://github.com/pjtoms/ds3-gcd "GitHub project link") contains the following.
+d* [README.md](https://github.com/pjtoms/ds3-gcd/README.md "this file") - This file
+* Code - File [run_analysis.R](https://github.com/pjtoms/ds3-gcd/run_analysis.R "Initial script") (R) and [run_analysis.Rmd](https://github.com/pjtoms/ds3-gcd/run_analysis.Rmd "main processing") (Rmarkdown). I chose to use RMarkdown based on comments from others that it allows for co-located documentation and code and a formatted presentation of the script and its output. The output from the R Markdown is at [run_analysis.html](https://github.com/pjtoms/ds3-gcd/run_analysis.html "run_analysis.Rmd output")
+* [Codebook.Rmd](https://github.com/pjtoms/ds3-gcd/Codebook.Rmd "code book generator script") and [Codebook.md](https://github.com/pjtoms/ds3-gcd/Codebook.md "code book markdown output"). Codebook.md provides a full description of derived tidy data set in markdown format.
+* Support files [grepDictionary.txt](https://github.com/pjtoms/ds3-gcd/grepDictionary.txt "grep expressions to support codebook production") and [namesDictionary.txt](https://github.com/pjtoms/ds3-gcd/namesDictionary.txt "names dictionary to support codebook production") used in Codebook production.
+* Output - Tidy format files in text, [uciMeanStdDevTidy.txt](https://github.com/pjtoms/ds3-gcd/uciMeanStdDevTidy.txt "text tidy file"), and csv, [uciMeanStdDevTidy.csv](https://github.com/pjtoms/ds3-gcd/uciMeanStdDevTidy.csv "csv tidy file"), formats.
 
 ### <a name="analysis"></a>Analysis
 A brief look at the data files shows a large, wide set of data, with accompanying column description files. So let's go from there.
