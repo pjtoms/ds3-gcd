@@ -1,3 +1,7 @@
+# My set to ignore.
+.*
+!.gitignore
+
 # Prerequisites
 *.d
 
