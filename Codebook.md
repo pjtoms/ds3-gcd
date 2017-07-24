@@ -16,8 +16,8 @@ General Information
 -------------------
 
 -   **Author:** *pjtx4657, Patrick (Pat) T.*
--   **GitHub Project Link:** [project](https://github.com/pjtoms "GitHub project link")
--   **Last update:** 2017-07-24 07:38:41<br>
+-   **GitHub Project Link:** [project](https://github.com/pjtoms/ds3-gcd "GitHub project link")
+-   **Last update:** 2017-07-24 12:43:41<br>
 
 Study Design
 ------------
@@ -28,7 +28,7 @@ The data linked to from the course website represents data collected from the ac
 
 ### Data Transformations
 
-See [run\_analysis.html](https://github.com/pjtoms/ "run_analysis.Rmd output") for a detailed description of data transformations, clean up, and the code used in production of the tidy data file.
+See [run\_analysis.html](http://htmlpreview.github.com/?https://github.com/pjtoms/ds3-gcd/run_analysis.html "run_analysis.Rmd output") for a detailed description of data transformations, clean up, and the code used in production of the tidy data file.
 
 ### Definitions
 
@@ -546,7 +546,7 @@ Additional Information
 
 The tidy data is saved as an R data.table in text and CSV formats. The following sample code may be used to read the data.table and restore its types as needed.
 
-I dont run this code, just provide as an example.
+I don't run this code, just provide it as an example.
 
 ``` r
 #

@@ -1,13 +1,13 @@
 ---
 title:  "run_analysis.Rmd"
-author: "[Patrick (Pat) T...](https://github.com/pjtoms)"
+author: "[Patrick (Pat) T...](https://github.com/pjtoms/ds3-gcd)"
 output:
   html_document:
     toc: TRUE
 ---
 <p>
 **title:** "run_analysis.Rmd"<br>
-**author:** "[Patrick (Pat) T...](https://github.com/pjtoms)"<br>
+**author:** "[Patrick (Pat) T...](https://github.com/pjtoms/ds3-gcd)"<br>
 **Last update:** `r Sys.time()`<br>
 **Environment:** RStudio on macOS Sierra, version - "`r Sys.info()["version"]`"<br>
 
